@@ -1,0 +1,263 @@
+type UserRole = 
+ variant {
+   Admin;
+   CenterManager;
+   Employer;
+   JobSeeker;
+   Student;
+ };
+type UserId = text;
+type User = 
+ record {
+   createdAt: Timestamp;
+   email: text;
+   firstName: text;
+   id: UserId;
+   isActive: bool;
+   lastLogin: opt Timestamp;
+   lastName: text;
+   passwordHash: text;
+   phone: opt text;
+   role: UserRole;
+ };
+type Timestamp = int;
+type StudentProfile = 
+ record {
+   address: opt text;
+   centerId: opt text;
+   dateOfBirth: opt Timestamp;
+   educationLevel: opt text;
+   familyIncome: opt text;
+   fatherName: opt text;
+   motherName: opt text;
+   placementStatus: text;
+   qualification: opt text;
+   userId: UserId;
+ };
+type Result_6 = 
+ variant {
+   err: text;
+   ok;
+ };
+type Result_5 = 
+ variant {
+   err: text;
+   ok: Application;
+ };
+type Result_4 = 
+ variant {
+   err: text;
+   ok: Center;
+ };
+type Result_3 = 
+ variant {
+   err: text;
+   ok: Course;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: Enrollment;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: Job;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: User;
+ };
+type PlacementRecord = 
+ record {
+   createdAt: Timestamp;
+   driveId: text;
+   id: text;
+   offerDetails: opt text;
+   offerStatus: text;
+   studentId: UserId;
+   testResult: opt text;
+ };
+type PlacementDrive = 
+ record {
+   companyName: text;
+   createdAt: Timestamp;
+   description: text;
+   driveDate: Timestamp;
+   id: text;
+   location: text;
+   positions: nat;
+   status: text;
+ };
+type Notification = 
+ record {
+   createdAt: Timestamp;
+   id: text;
+   isRead: bool;
+   link: opt text;
+   message: text;
+   notifType: text;
+   userId: UserId;
+ };
+type JobSeekerProfile = 
+ record {
+   address: opt text;
+   city: opt text;
+   country: opt text;
+   createdAt: Timestamp;
+   resumeUrl: opt text;
+   state: opt text;
+   userId: UserId;
+   zipCode: opt text;
+ };
+type Job = 
+ record {
+   applicationsCount: nat;
+   category: text;
+   companyEmail: text;
+   companyName: text;
+   companyWebsite: opt text;
+   createdAt: Timestamp;
+   description: text;
+   education: text;
+   employerId: UserId;
+   id: text;
+   jobType: text;
+   location: text;
+   logoUrl: opt text;
+   requirements: text;
+   title: text;
+ };
+type Experience = 
+ record {
+   companyName: text;
+   description: opt text;
+   endDate: opt Timestamp;
+   id: text;
+   isCurrent: bool;
+   positionTitle: text;
+   startDate: Timestamp;
+   userId: UserId;
+ };
+type Enrollment = 
+ record {
+   courseId: text;
+   enrolledAt: Timestamp;
+   id: text;
+   progressPercent: nat;
+   status: text;
+   studentId: UserId;
+ };
+type Education = 
+ record {
+   degree: text;
+   description: opt text;
+   endDate: opt Timestamp;
+   id: text;
+   institution: text;
+   startDate: Timestamp;
+   userId: UserId;
+ };
+type Course = 
+ record {
+   capacity: nat;
+   category: text;
+   centerId: opt text;
+   createdAt: Timestamp;
+   description: text;
+   durationWeeks: nat;
+   endDate: Timestamp;
+   enrolledCount: nat;
+   id: text;
+   startDate: Timestamp;
+   title: text;
+ };
+type Center = 
+ record {
+   capacity: nat;
+   createdAt: Timestamp;
+   id: text;
+   location: text;
+   managerContact: text;
+   managerName: text;
+   name: text;
+ };
+type Application = 
+ record {
+   applicantId: UserId;
+   appliedAt: Timestamp;
+   id: text;
+   jobId: text;
+   resumeUrl: opt text;
+   status: text;
+ };
+service : {
+  addCenter: (name: text, location: text, capacity: nat, managerName: 
+   text, managerContact: text) -> (Center);
+  addCourse: (title: text, description: text, category: text, durationWeeks:
+   nat, startDate: Timestamp, endDate: Timestamp, capacity: nat, centerId:
+   opt text) -> (Course);
+  addEducation: (userId: text, institution: text, degree: text, description:
+   opt text, startDate: Timestamp, endDate: opt Timestamp) -> (Education);
+  addExperience: (userId: text, companyName: text, positionTitle: text,
+   description: opt text, startDate: Timestamp, endDate: opt Timestamp,
+   isCurrent: bool) -> (Experience);
+  addJob: (employerId: text, title: text, description: text, requirements:
+   text, education: text, location: text, jobType: text, category: text,
+   companyName: text, companyEmail: text, companyWebsite: opt text) -> (
+   Job);
+  addPlacementDrive: (companyName: text, location: text, driveDate:
+   Timestamp, positions: nat, description: text) -> (PlacementDrive);
+  applyForJob: (jobId: text, applicantId: text, resumeUrl: opt text) ->
+   (Result_5);
+  createOrUpdateProfile: (userId: text, profile: StudentProfile) ->
+   (StudentProfile);
+  deleteCenter: (id: text) -> (Result_6);
+  deleteEducation: (id: text) -> (Result_6);
+  deleteExperience: (id: text) -> (Result_6);
+  deleteJob: (id: text) -> (Result_6);
+  deleteProfile: (userId: text) -> (Result_6);
+  enrollInCourse: (studentId: text, courseId: text) -> (Result_2);
+  getAllStudents: () -> (vec User);
+  getApplicationsForJob: (jobId: text) -> (vec Application);
+  getCenter: (id: text) -> (opt Center);
+  getCourse: (id: text) -> (opt Course);
+  getCourseEnrollments: (courseId: text) -> (vec Enrollment);
+  getEducations: (userId: text) -> (vec Education);
+  getExperiences: (userId: text) -> (vec Experience);
+  getJob: (id: text) -> (opt Job);
+  getJobSeekerProfile: (userId: text) -> (opt JobSeekerProfile);
+  getJobsByEmployer: (employerId: text) -> (vec Job);
+  getMyApplications: (applicantId: text) -> (vec Application);
+  getMyEnrollments: (studentId: text) -> (vec Enrollment);
+  getMyPlacementRecord: (studentId: text) -> (vec PlacementRecord);
+  getNotifications: (userId: text) -> (vec Notification);
+  getProfile: (userId: text) -> (opt StudentProfile);
+  getUserById: (id: text) -> (Result);
+  listCenters: () -> (vec Center);
+  listCourses: () -> (vec Course);
+  listJobs: () -> (vec Job);
+  listPlacementDrives: () -> (vec PlacementDrive);
+  login: (email: text, passwordHash: text) -> (Result);
+  markNotificationRead: (notifId: text) -> (Result_6);
+  register: (email: text, passwordHash: text, firstName: text, lastName:
+   text, role: UserRole) -> (Result);
+  seedSampleData: () -> (text);
+  sendNotification: (userId: text, notifType: text, message: text, link:
+   opt text) -> (Notification);
+  updateApplicationStatus: (applicationId: text, status: text) -> (Result_5);
+  updateCenter: (id: text, name: text, location: text, capacity: nat,
+   managerName: text, managerContact: text) -> (Result_4);
+  updateCourse: (id: text, title: text, description: text, category: 
+   text, durationWeeks: nat, startDate: Timestamp, endDate: Timestamp,
+   capacity: nat) -> (Result_3);
+  updateEnrollmentProgress: (enrollmentId: text, progress: nat) -> (Result_2);
+  updateJob: (id: text, title: text, description: text, requirements: 
+   text, education: text, location: text, jobType: text, category: text) ->
+   (Result_1);
+  updateUser: (id: text, firstName: text, lastName: text, phone: opt text) ->
+   (Result);
+  upsertJobSeekerProfile: (userId: text, profile: JobSeekerProfile) ->
+   (JobSeekerProfile);
+}

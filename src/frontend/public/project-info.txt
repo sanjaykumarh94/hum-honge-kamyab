@@ -1,0 +1,27 @@
+========================================================
+  HUM HONGE KAMYAB — PROJECT INFORMATION
+========================================================
+
+Project Name  : Hum Honge Kamyab (हम होंगे कामयाब)
+Description   : Shree Raipur Cement Plant CSR Initiative
+                Career services, skill development and youth
+                empowerment platform for Chhattisgarh.
+
+Stack         : React 19 + TypeScript + Tailwind CSS (Frontend)
+                Motoko Canister (Backend — Internet Computer)
+Deployment    : Internet Computer (ICP)
+
+Generated At  : ${new Date().toISOString()}
+
+Modules       :
+  - Admin Dashboard (Centers, Courses, Students, Placements, Reports)
+  - Student Portal (Enrollments, Courses, Placements, Notifications)
+  - Job Seeker Portal (Profile, Job Search & Application)
+  - Employer Portal (Post Jobs, Manage Candidates)
+  - Public Landing Page (Program Info, Government Schemes, Registration)
+
+Languages     : English / Hindi (session toggle)
+
+========================================================
+  For full project source code, contact your developer.
+========================================================

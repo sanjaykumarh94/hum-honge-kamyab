@@ -1,0 +1,241 @@
+// Version: 1.0.0
+type Application__927026856 =
+  {
+    applicantId : UserId__158757552;
+    appliedAt : Timestamp__301639476;
+    id : Text;
+    jobId : Text;
+    resumeUrl : ?Text;
+    status : Text
+  };
+type Center__349563534 =
+  {
+    capacity : Nat;
+    createdAt : Timestamp__301639476;
+    id : Text;
+    location : Text;
+    managerContact : Text;
+    managerName : Text;
+    name : Text
+  };
+type Course__901072021 =
+  {
+    capacity : Nat;
+    category : Text;
+    centerId : ?Text;
+    createdAt : Timestamp__301639476;
+    description : Text;
+    durationWeeks : Nat;
+    endDate : Timestamp__301639476;
+    enrolledCount : Nat;
+    id : Text;
+    startDate : Timestamp__301639476;
+    title : Text
+  };
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type Education__1003669497 =
+  {
+    degree : Text;
+    description : ?Text;
+    endDate : ?Timestamp__301639476;
+    id : Text;
+    institution : Text;
+    startDate : Timestamp__301639476;
+    userId : UserId__158757552
+  };
+type Enrollment__196333362 =
+  {
+    courseId : Text;
+    enrolledAt : Timestamp__301639476;
+    id : Text;
+    progressPercent : Nat;
+    status : Text;
+    studentId : UserId__158757552
+  };
+type Experience__158252938 =
+  {
+    companyName : Text;
+    description : ?Text;
+    endDate : ?Timestamp__301639476;
+    id : Text;
+    isCurrent : Bool;
+    positionTitle : Text;
+    startDate : Timestamp__301639476;
+    userId : UserId__158757552
+  };
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type JobSeekerProfile__393349328 =
+  {
+    address : ?Text;
+    city : ?Text;
+    country : ?Text;
+    createdAt : Timestamp__301639476;
+    resumeUrl : ?Text;
+    state : ?Text;
+    userId : UserId__158757552;
+    zipCode : ?Text
+  };
+type Job__474689129 =
+  {
+    applicationsCount : Nat;
+    category : Text;
+    companyEmail : Text;
+    companyName : Text;
+    companyWebsite : ?Text;
+    createdAt : Timestamp__301639476;
+    description : Text;
+    education : Text;
+    employerId : UserId__158757552;
+    id : Text;
+    jobType : Text;
+    location : Text;
+    logoUrl : ?Text;
+    requirements : Text;
+    title : Text
+  };
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type Notification__642398496 =
+  {
+    createdAt : Timestamp__301639476;
+    id : Text;
+    isRead : Bool;
+    link : ?Text;
+    message : Text;
+    notifType : Text;
+    userId : UserId__158757552
+  };
+type PlacementDrive__783957142 =
+  {
+    companyName : Text;
+    createdAt : Timestamp__301639476;
+    description : Text;
+    driveDate : Timestamp__301639476;
+    id : Text;
+    location : Text;
+    positions : Nat;
+    status : Text
+  };
+type PlacementRecord__567238445 =
+  {
+    createdAt : Timestamp__301639476;
+    driveId : Text;
+    id : Text;
+    offerDetails : ?Text;
+    offerStatus : Text;
+    studentId : UserId__158757552;
+    testResult : ?Text
+  };
+type StudentProfile__840182040 =
+  {
+    address : ?Text;
+    centerId : ?Text;
+    dateOfBirth : ?Timestamp__301639476;
+    educationLevel : ?Text;
+    familyIncome : ?Text;
+    fatherName : ?Text;
+    motherName : ?Text;
+    placementStatus : Text;
+    qualification : ?Text;
+    userId : UserId__158757552
+  };
+type Timestamp__301639476 = Int;
+type UserId__158757552 = Text;
+type UserRole__451090586 =
+  {#Admin; #CenterManager; #Employer; #JobSeeker; #Student};
+type User__640040378 =
+  {
+    createdAt : Timestamp__301639476;
+    email : Text;
+    firstName : Text;
+    id : UserId__158757552;
+    isActive : Bool;
+    lastLogin : ?Timestamp__301639476;
+    lastName : Text;
+    passwordHash : Text;
+    phone : ?Text;
+    role : UserRole__451090586
+  };
+actor {
+  stable appCounter : {var val : Nat};
+  stable applications :
+    {
+      var root : Node__46230540<Text, Application__927026856>;
+      var size : Nat__490723111
+    };
+  stable centerCounter : {var val : Nat};
+  stable centers :
+    {
+      var root : Node__46230540<Text, Center__349563534>;
+      var size : Nat__490723111
+    };
+  stable courseCounter : {var val : Nat};
+  stable courses :
+    {
+      var root : Node__46230540<Text, Course__901072021>;
+      var size : Nat__490723111
+    };
+  stable driveCounter : {var val : Nat};
+  stable drives :
+    {
+      var root : Node__46230540<Text, PlacementDrive__783957142>;
+      var size : Nat__490723111
+    };
+  stable eduCounter : {var val : Nat};
+  stable educations :
+    {
+      var root : Node__46230540<Text, Education__1003669497>;
+      var size : Nat__490723111
+    };
+  stable enrollCounter : {var val : Nat};
+  stable enrollments :
+    {
+      var root : Node__46230540<Text, Enrollment__196333362>;
+      var size : Nat__490723111
+    };
+  stable expCounter : {var val : Nat};
+  stable experiences :
+    {
+      var root : Node__46230540<Text, Experience__158252938>;
+      var size : Nat__490723111
+    };
+  stable jobCounter : {var val : Nat};
+  stable jobSeekerProfiles :
+    {
+      var root : Node__46230540<Text, JobSeekerProfile__393349328>;
+      var size : Nat__490723111
+    };
+  stable jobs :
+    {
+      var root : Node__46230540<Text, Job__474689129>;
+      var size : Nat__490723111
+    };
+  stable notifCounter : {var val : Nat};
+  stable notifications :
+    {
+      var root : Node__46230540<Text, Notification__642398496>;
+      var size : Nat__490723111
+    };
+  stable placementRecords :
+    {
+      var root : Node__46230540<Text, PlacementRecord__567238445>;
+      var size : Nat__490723111
+    };
+  stable recordCounter : {var val : Nat};
+  stable studentProfiles :
+    {
+      var root : Node__46230540<Text, StudentProfile__840182040>;
+      var size : Nat__490723111
+    };
+  stable userCounter : {var val : Nat};
+  stable users :
+    {
+      var root : Node__46230540<Text, User__640040378>;
+      var size : Nat__490723111
+    }
+};
