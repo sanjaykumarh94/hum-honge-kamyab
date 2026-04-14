@@ -1,11 +1,14 @@
 import Types "../types/common";
 import CoursesLib "../lib/courses";
+import NotifLib "../lib/notifications";
 
 mixin (
   courses : CoursesLib.CourseMap,
   enrollments : CoursesLib.EnrollmentMap,
   courseCounter : CoursesLib.Counter,
   enrollCounter : CoursesLib.Counter,
+  notifications : NotifLib.NotificationMap,
+  notifCounter : NotifLib.Counter,
 ) {
   public func addCourse(
     title : Text,
@@ -41,11 +44,30 @@ mixin (
     CoursesLib.updateCourse(courses, id, title, description, category, durationWeeks, startDate, endDate, capacity);
   };
 
+  /// Enroll student in a course and auto-send a course_update notification on success.
   public func enrollInCourse(
     studentId : Text,
     courseId : Text,
   ) : async Types.Result<Types.Enrollment, Text> {
-    CoursesLib.enrollStudent(courses, enrollments, enrollCounter, studentId, courseId);
+    let result = CoursesLib.enrollStudent(courses, enrollments, enrollCounter, studentId, courseId);
+    switch (result) {
+      case (#ok(enrollment)) {
+        let courseTitle = switch (CoursesLib.getCourseById(courses, courseId)) {
+          case (?course) { course.title };
+          case null { "Unknown Course" };
+        };
+        let _ = NotifLib.createNotification(
+          notifications,
+          notifCounter,
+          studentId,
+          "course_update",
+          "You have been successfully enrolled in \"" # courseTitle # "\".",
+          ?("course:" # courseId),
+        );
+        #ok(enrollment);
+      };
+      case (#err(e)) { #err(e) };
+    };
   };
 
   public func getMyEnrollments(studentId : Text) : async [Types.Enrollment] {

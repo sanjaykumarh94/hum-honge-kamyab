@@ -105,11 +105,11 @@ mixin (
     let _ = PlacementsLib.createPlacementRecord(placementRecords, recordCounter, s3Id, drv3.id);
 
     // --- Notifications ---
-    let _ = NotifLib.createNotification(notifications, notifCounter, s1Id, "job", "New job posted: Process Engineer at Shree Cement", ?j1.id);
-    let _ = NotifLib.createNotification(notifications, notifCounter, s2Id, "event", "Placement drive by Infosys BPO on " # drv2.id, null);
-    let _ = NotifLib.createNotification(notifications, notifCounter, s3Id, "course", "Your enrollment in Welding & Fabrication is confirmed", ?co3.id);
-    let _ = NotifLib.createNotification(notifications, notifCounter, s4Id, "job", "New job: Lab Technician at Shree Cement", ?j4.id);
-    let _ = NotifLib.createNotification(notifications, notifCounter, s5Id, "course", "English Communication Skills course starts soon!", ?co4.id);
+    let _ = NotifLib.createNotification(notifications, notifCounter, s1Id, "job_alert", "New job posted: Process Engineer at Shree Cement", ?j1.id);
+    let _ = NotifLib.createNotification(notifications, notifCounter, s2Id, "placement_drive", "Placement drive by Infosys BPO announced — 25 positions available.", ?drv2.id);
+    let _ = NotifLib.createNotification(notifications, notifCounter, s3Id, "course_update", "Your enrollment in Welding & Fabrication is confirmed", ?co3.id);
+    let _ = NotifLib.createNotification(notifications, notifCounter, s4Id, "job_alert", "New job: Lab Technician at Shree Cement", ?j4.id);
+    let _ = NotifLib.createNotification(notifications, notifCounter, s5Id, "course_update", "English Communication Skills course starts soon!", ?co4.id);
 
     "Seed data created: 14 users, 3 centers, 5 courses, 8 enrollments, 5 jobs, 6 applications, 3 placement drives, 3 placement records, 5 notifications";
   };

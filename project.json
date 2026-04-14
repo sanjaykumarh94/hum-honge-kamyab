@@ -1,24 +1,23 @@
 {
-  "overview": "Hum Honge Kamyab is a government-branded CSR platform for Shree Cement, connecting students, job seekers, employers, and training centers to support youth empowerment and employment across Chhattisgarh. Features include course enrollment, job portal, placement tracking, and multi-role dashboards.",
+  "overview": "Hum Honge Kamyab is a government-branded CSR platform for Shree Cement's youth empowerment initiative. It serves students, job seekers, employers, center managers, and admins with role-based dashboards, course enrollment, placement tracking, job portal, and SMS/OTP-based authentication with real-time notifications.",
   "features": [
-    "English/Hindi language toggle in header (current session)",
-    "Auto-translation of UI text to Hindi",
-    "Admin-only project source code download as ZIP",
-    "Role-based dashboards for Admin, Student, Employer, Job Seeker",
+    "SMS/OTP phone-based login with 6-digit verification code",
+    "Real-time notification polling with unread badge",
+    "Role-based dashboards for Admin, Student, Employer, Job Seeker, Center Manager",
     "Course enrollment and progress tracking",
-    "Job portal with search, apply, and candidate management",
-    "Placement drive tracking",
-    "Resume upload and profile management"
+    "Job portal with search, applications, and placement tracking",
+    "English/Hindi language toggle"
   ],
   "category": "productivity",
   "tags": [
     "csr",
     "education",
-    "employment",
+    "jobs",
+    "placement",
     "government",
-    "hindi",
-    "job-portal",
-    "training"
+    "otp",
+    "notifications",
+    "india"
   ],
-  "last_updated": "2026-04-13T16:42:52.179Z"
+  "last_updated": "2026-04-13T17:21:09.477Z"
 }

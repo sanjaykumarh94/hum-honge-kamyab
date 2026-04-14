@@ -9,6 +9,7 @@ import { Suspense, lazy } from "react";
 import { UserRole } from "./backend.d";
 import { AuthLayout, PublicLayout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { NotificationProvider } from "./context/NotificationContext";
 import { useAuthStore } from "./store/auth";
 
 // ─── Lazy page imports ───────────────────────────────────────────
@@ -315,5 +316,9 @@ declare module "@tanstack/react-router" {
 
 // ─── App ──────────────────────────────────────────────────────────
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <NotificationProvider>
+      <RouterProvider router={router} />
+    </NotificationProvider>
+  );
 }

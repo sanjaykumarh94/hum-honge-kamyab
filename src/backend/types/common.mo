@@ -18,11 +18,23 @@ module {
     passwordHash : Text;
     firstName : Text;
     lastName : Text;
-    phone : ?Text;
+    phone : Text;
+    phoneVerified : Bool;
     role : UserRole;
     createdAt : Timestamp;
     lastLogin : ?Timestamp;
     isActive : Bool;
+  };
+
+  public type OtpSession = {
+    id : Nat;
+    phone : Text;
+    hashedCode : Text;
+    createdAt : Int;
+    expiresAt : Int;
+    sendCount : Nat;
+    verifyAttempts : Nat;
+    verified : Bool;
   };
 
   public type Center = {
@@ -104,6 +116,15 @@ module {
     offerStatus : Text;
     offerDetails : ?Text;
     createdAt : Timestamp;
+  };
+
+  /// Notification type variant. Used as a discriminated union for notification categorisation.
+  public type NotifType = {
+    #job_alert;
+    #course_update;
+    #event_reminder;
+    #placement_drive;
+    #application_status;
   };
 
   public type Notification = {

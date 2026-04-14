@@ -2,7 +2,7 @@ import Types "../types/common";
 import Map "mo:core/Map";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
-import Iter "mo:core/Iter";
+import Int "mo:core/Int";
 
 module {
   public type NotificationMap = Map.Map<Text, Types.Notification>;
@@ -13,13 +13,16 @@ module {
     "n" # debug_show(counter.val);
   };
 
+  /// Returns all notifications for a user, sorted by newest first (descending createdAt).
   public func getNotifications(
     notifications : NotificationMap,
     userId : Text,
   ) : [Types.Notification] {
-    notifications.values().filter<Types.Notification>(
-      func(n) { n.userId == userId },
+    let filtered = notifications.values().filter(
+      func(n : Types.Notification) : Bool { n.userId == userId },
     ).toArray();
+    // Sort by createdAt descending (newest first)
+    filtered.sort(func(a, b) { Int.compare(b.createdAt, a.createdAt) });
   };
 
   public func markNotificationRead(

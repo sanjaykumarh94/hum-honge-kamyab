@@ -11,7 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useRouter } from "@tanstack/react-router";
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Flame } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Flame,
+  Phone,
+  SmartphoneNfc,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { UserRole } from "../backend.d";
@@ -86,6 +94,14 @@ function PasswordStrength({ password }: { password: string }) {
   );
 }
 
+/** Validate E.164-like Indian phone: 10 digits, or +91 prefix */
+function isValidPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, "");
+  return (
+    digits.length === 10 || (digits.length === 12 && digits.startsWith("91"))
+  );
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const { mutateAsync: register, isPending } = useRegister();
@@ -95,12 +111,14 @@ export default function SignupPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [registered, setRegistered] = useState(false);
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
@@ -108,6 +126,8 @@ export default function SignupPage() {
     if (!lastName.trim()) errs.lastName = "Last name is required";
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email))
       errs.email = "Valid email required";
+    if (!phone.trim() || !isValidPhone(phone))
+      errs.phone = "Valid 10-digit Indian mobile number required";
     if (password.length < 8)
       errs.password = "Password must be at least 8 characters";
     if (password !== confirmPassword)
@@ -121,6 +141,9 @@ export default function SignupPage() {
     setError("");
     if (!validate()) return;
 
+    const digits = phone.replace(/\D/g, "");
+    const e164Phone = `+91${digits.slice(-10)}`;
+
     try {
       const result = await register({
         email: email.trim().toLowerCase(),
@@ -132,12 +155,17 @@ export default function SignupPage() {
 
       if (result.__kind__ === "ok") {
         storeLogin(result.ok);
+        setRegistered(true);
         toast.success(
           `Welcome, ${result.ok.firstName}! Registration successful.`,
         );
-        router.navigate({
-          to: ROLE_DASHBOARD[result.ok.role as UserRole] ?? "/",
-        });
+        // Brief pause so user sees the phone verification prompt, then navigate
+        setTimeout(() => {
+          router.navigate({
+            to: ROLE_DASHBOARD[result.ok.role as UserRole] ?? "/",
+          });
+        }, 4000);
+        void e164Phone; // used for future OTP integration
       } else {
         setError(
           result.err ??
@@ -149,6 +177,77 @@ export default function SignupPage() {
     }
   }
 
+  function handleVerifyNow() {
+    // Navigate to login with OTP tab pre-selected
+    router.navigate({ to: "/login" });
+    toast.info("Use 'Login with OTP' to verify your mobile number.");
+  }
+
+  // ── Post-registration: phone verification prompt ────────────────────────────
+  if (registered) {
+    return (
+      <div
+        className="min-h-[calc(100vh-120px)] flex items-center justify-center py-10 px-4"
+        style={{
+          background:
+            "linear-gradient(135deg, oklch(0.97 0.01 37) 0%, oklch(0.95 0.02 240) 100%)",
+        }}
+      >
+        <div className="w-full max-w-lg">
+          <Card className="card-elevated shadow-lg text-center">
+            <CardContent className="pt-8 pb-8 space-y-5">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mx-auto">
+                <CheckCircle2 size={32} className="text-green-600" />
+              </div>
+              <div>
+                <h2 className="font-display font-bold text-xl text-foreground mb-1">
+                  Account Created!
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  Your account has been successfully created.
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-4 text-left space-y-3">
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                  <SmartphoneNfc size={16} />
+                  Verify your phone number to complete setup
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Verifying your mobile number{" "}
+                  <span className="font-medium text-foreground">
+                    +91 {phone.replace(/\D/g, "").slice(-10)}
+                  </span>{" "}
+                  enables SMS-based OTP login and important notifications.
+                </p>
+                <Button
+                  onClick={handleVerifyNow}
+                  className="w-full btn-primary"
+                  data-ocid="verify-phone-cta"
+                >
+                  <Phone size={14} className="mr-1.5" />
+                  Verify Phone Now / अभी सत्यापित करें
+                </Button>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Redirecting to your dashboard in a moment...{" "}
+                <Link
+                  to={ROLE_DASHBOARD[role] ?? "/"}
+                  className="text-primary hover:underline"
+                  data-ocid="skip-to-dashboard"
+                >
+                  Skip →
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Registration form ───────────────────────────────────────────────────────
   return (
     <div
       className="min-h-[calc(100vh-120px)] flex items-center justify-center py-10 px-4"
@@ -263,6 +362,45 @@ export default function SignupPage() {
                 {fieldErrors.email && (
                   <p className="text-xs text-destructive">
                     {fieldErrors.email}
+                  </p>
+                )}
+              </div>
+
+              {/* Phone */}
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-phone">
+                  Mobile Number <span className="text-destructive">*</span>
+                </Label>
+                <div className="flex gap-2">
+                  <div className="flex items-center px-3 bg-muted border border-input rounded-md text-sm font-medium text-muted-foreground shrink-0 h-9">
+                    +91
+                  </div>
+                  <div className="relative flex-1">
+                    <Phone
+                      size={15}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="10-digit mobile number"
+                      value={phone}
+                      onChange={(e) =>
+                        setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
+                      }
+                      className="pl-9"
+                      maxLength={10}
+                      autoComplete="tel-national"
+                      data-ocid="signup-phone"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Used for OTP login and important notifications
+                </p>
+                {fieldErrors.phone && (
+                  <p className="text-xs text-destructive">
+                    {fieldErrors.phone}
                   </p>
                 )}
               </div>

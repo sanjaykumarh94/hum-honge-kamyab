@@ -1,4 +1,4 @@
-// Version: 1.0.0
+// Version: 3.0.0
 type Application__927026856 =
   {
     applicantId : UserId__158757552;
@@ -64,6 +64,29 @@ type Experience__158252938 =
     startDate : Timestamp__301639476;
     userId : UserId__158757552
   };
+type HttpHeader__454130294 = {name : Text; value : Text};
+type HttpMethod__1019082684 = {#get; #head; #post};
+type HttpRequestArgs__149775714 =
+  {
+    body : ?Blob;
+    headers : [HttpHeader__454130294];
+    is_replicated : ?Bool;
+    max_response_bytes : ?Nat64;
+    method : HttpMethod__1019082684;
+    transform :
+      ?{
+         context : Blob;
+         function :
+           shared query {
+                          context : Blob;
+                          response : HttpRequestResult__36175091
+                        } ->
+             async HttpRequestResult__36175091
+       };
+    url : Text
+  };
+type HttpRequestResult__36175091 =
+  {body : Blob; headers : [HttpHeader__454130294]; status : Nat};
 type Internal__8484328<K, V> =
   {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
 type JobSeekerProfile__393349328 =
@@ -96,6 +119,10 @@ type Job__474689129 =
     title : Text
   };
 type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type Map__158565046<K, V> = Map__297112838<K, V>;
+type Map__297112838<K, V> =
+  {var root : Node__46230540<K, V>; var size : Nat__490723111};
+type Map__605269027<K, V> = Map__158565046<K, V>;
 type Nat__490723111 = Nat__920180692;
 type Nat__920180692 = Nat;
 type Node__46230540<K, V> =
@@ -109,6 +136,28 @@ type Notification__642398496 =
     message : Text;
     notifType : Text;
     userId : UserId__158757552
+  };
+type OldOtpSession__511499675 =
+  {
+    createdAt : Int;
+    expiresAt : Int;
+    hashedCode : Text;
+    id : Nat;
+    phone : Text;
+    sendCount : Nat;
+    verified : Bool;
+    verifyCount : Nat
+  };
+type OtpSession__530754535 =
+  {
+    createdAt : Int;
+    expiresAt : Int;
+    hashedCode : Text;
+    id : Nat;
+    phone : Text;
+    sendCount : Nat;
+    verified : Bool;
+    verifyAttempts : Nat
   };
 type PlacementDrive__783957142 =
   {
@@ -158,10 +207,14 @@ type User__640040378 =
     lastLogin : ?Timestamp__301639476;
     lastName : Text;
     passwordHash : Text;
-    phone : ?Text;
+    phone : Text;
+    phoneVerified : Bool;
     role : UserRole__451090586
   };
-actor {
+actor ({
+  stable SMS_API_KEY : Text;
+  stable SMS_API_URL : Text;
+  stable SMS_TEMPLATE_ID : Text;
   stable appCounter : {var val : Nat};
   stable applications :
     {
@@ -204,6 +257,12 @@ actor {
       var root : Node__46230540<Text, Experience__158252938>;
       var size : Nat__490723111
     };
+  stable ic :
+    actor {
+      http_request :
+        shared HttpRequestArgs__149775714 ->
+          async HttpRequestResult__36175091
+    };
   stable jobCounter : {var val : Nat};
   stable jobSeekerProfiles :
     {
@@ -219,6 +278,100 @@ actor {
   stable notifications :
     {
       var root : Node__46230540<Text, Notification__642398496>;
+      var size : Nat__490723111
+    };
+  stable otpCounter : {var val : Nat};
+  in otpSessions : Map__605269027<Nat, OldOtpSession__511499675>;
+  stable placementRecords :
+    {
+      var root : Node__46230540<Text, PlacementRecord__567238445>;
+      var size : Nat__490723111
+    };
+  stable recordCounter : {var val : Nat};
+  stable studentProfiles :
+    {
+      var root : Node__46230540<Text, StudentProfile__840182040>;
+      var size : Nat__490723111
+    };
+  stable userCounter : {var val : Nat};
+  stable users :
+    {
+      var root : Node__46230540<Text, User__640040378>;
+      var size : Nat__490723111
+    }
+}, {
+  stable SMS_API_KEY : Text;
+  stable SMS_API_URL : Text;
+  stable SMS_TEMPLATE_ID : Text;
+  stable appCounter : {var val : Nat};
+  stable applications :
+    {
+      var root : Node__46230540<Text, Application__927026856>;
+      var size : Nat__490723111
+    };
+  stable centerCounter : {var val : Nat};
+  stable centers :
+    {
+      var root : Node__46230540<Text, Center__349563534>;
+      var size : Nat__490723111
+    };
+  stable courseCounter : {var val : Nat};
+  stable courses :
+    {
+      var root : Node__46230540<Text, Course__901072021>;
+      var size : Nat__490723111
+    };
+  stable driveCounter : {var val : Nat};
+  stable drives :
+    {
+      var root : Node__46230540<Text, PlacementDrive__783957142>;
+      var size : Nat__490723111
+    };
+  stable eduCounter : {var val : Nat};
+  stable educations :
+    {
+      var root : Node__46230540<Text, Education__1003669497>;
+      var size : Nat__490723111
+    };
+  stable enrollCounter : {var val : Nat};
+  stable enrollments :
+    {
+      var root : Node__46230540<Text, Enrollment__196333362>;
+      var size : Nat__490723111
+    };
+  stable expCounter : {var val : Nat};
+  stable experiences :
+    {
+      var root : Node__46230540<Text, Experience__158252938>;
+      var size : Nat__490723111
+    };
+  stable ic :
+    actor {
+      http_request :
+        shared HttpRequestArgs__149775714 ->
+          async HttpRequestResult__36175091
+    };
+  stable jobCounter : {var val : Nat};
+  stable jobSeekerProfiles :
+    {
+      var root : Node__46230540<Text, JobSeekerProfile__393349328>;
+      var size : Nat__490723111
+    };
+  stable jobs :
+    {
+      var root : Node__46230540<Text, Job__474689129>;
+      var size : Nat__490723111
+    };
+  stable notifCounter : {var val : Nat};
+  stable notifications :
+    {
+      var root : Node__46230540<Text, Notification__642398496>;
+      var size : Nat__490723111
+    };
+  stable otpCounter : {var val : Nat};
+  stable otpSessions :
+    {
+      var root : Node__46230540<Nat, OtpSession__530754535>;
       var size : Nat__490723111
     };
   stable placementRecords :
@@ -238,4 +391,4 @@ actor {
       var root : Node__46230540<Text, User__640040378>;
       var size : Nat__490723111
     }
-};
+}) ;

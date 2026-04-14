@@ -1,7 +1,12 @@
 import { useActor } from "@caffeineai/core-infrastructure";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createActor } from "../backend";
-import type { JobSeekerProfile, StudentProfile, UserRole } from "../backend.d";
+import type {
+  JobSeekerProfile,
+  Notification,
+  StudentProfile,
+  UserRole,
+} from "../backend.d";
 
 // ─── Query Keys ────────────────────────────────────────────────
 export const QK = {
@@ -21,12 +26,41 @@ export const QK = {
   placementRecords: (studentId: string) =>
     ["placementRecords", studentId] as const,
   notifications: (userId: string) => ["notifications", userId] as const,
+  notificationsWithCount: (userId: string) =>
+    ["notifications", "withCount", userId] as const,
+  unreadCount: (userId: string) => ["notifications", "unread", userId] as const,
+  otpStatus: (sessionId: bigint) =>
+    ["otp", "status", String(sessionId)] as const,
   studentProfile: (userId: string) => ["studentProfile", userId] as const,
   jobSeekerProfile: (userId: string) => ["jobSeekerProfile", userId] as const,
   experiences: (userId: string) => ["experiences", userId] as const,
   educations: (userId: string) => ["educations", userId] as const,
   allStudents: ["allStudents"] as const,
 };
+
+// ─── OTP types (aligned with backend.d.ts) ───────────────────
+export interface SendOtpResult {
+  ok: boolean;
+  sessionId: bigint;
+  error?: string;
+}
+
+export interface VerifyOtpResult {
+  ok: boolean;
+  userId?: bigint;
+  error?: string;
+}
+
+export interface OtpStatusResult {
+  valid: boolean;
+  expired: boolean;
+  attemptsLeft: bigint;
+}
+
+interface NotificationsWithCountResult {
+  notifications: Notification[];
+  unreadCount: number;
+}
 
 // ─── Jobs ───────────────────────────────────────────────────────
 export function useGetJobs() {
@@ -213,6 +247,98 @@ export function useGetNotifications(userId: string) {
       return actor.getNotifications(userId);
     },
     enabled: !!actor && !isFetching && !!userId,
+  });
+}
+
+/**
+ * Polls notifications with unread count every 4 seconds.
+ * Uses the native backend getNotificationsWithCount when available.
+ */
+export function useGetNotificationsWithCount(userId: string) {
+  const { actor, isFetching } = useActor(createActor);
+  return useQuery<NotificationsWithCountResult>({
+    queryKey: QK.notificationsWithCount(userId),
+    queryFn: async (): Promise<NotificationsWithCountResult> => {
+      if (!actor) return { notifications: [], unreadCount: 0 };
+      const result = await actor.getNotificationsWithCount(userId);
+      return {
+        notifications: result.notifications,
+        unreadCount: Number(result.unreadCount),
+      };
+    },
+    enabled: !!actor && !isFetching && !!userId,
+    refetchInterval: 4000,
+  });
+}
+
+export function useGetUnreadCount(userId: string) {
+  const { actor, isFetching } = useActor(createActor);
+  return useQuery<number>({
+    queryKey: QK.unreadCount(userId),
+    queryFn: async (): Promise<number> => {
+      if (!actor) return 0;
+      const count = await actor.getUnreadCount(userId);
+      return Number(count);
+    },
+    enabled: !!actor && !isFetching && !!userId,
+    refetchInterval: 4000,
+  });
+}
+
+// ─── OTP mutations ───────────────────────────────────────────────
+/**
+ * useSendOtp — sends OTP to the given phone via backend.
+ * Backend method sendOtp is available in backend.d.ts.
+ */
+export function useSendOtp() {
+  const { actor } = useActor(createActor);
+  return useMutation<SendOtpResult, Error, { phone: string }>({
+    mutationFn: async ({
+      phone,
+    }: { phone: string }): Promise<SendOtpResult> => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.sendOtp(phone);
+    },
+  });
+}
+
+/**
+ * useVerifyOtp — verifies the 6-digit code against a session.
+ */
+export function useVerifyOtp() {
+  const { actor } = useActor(createActor);
+  return useMutation<
+    VerifyOtpResult,
+    Error,
+    { sessionId: bigint; code: string }
+  >({
+    mutationFn: async ({
+      sessionId,
+      code,
+    }: {
+      sessionId: bigint;
+      code: string;
+    }): Promise<VerifyOtpResult> => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.verifyOtp(sessionId, code);
+    },
+  });
+}
+
+/**
+ * useGetOtpStatus — polls OTP session validity.
+ */
+export function useGetOtpStatus(sessionId: bigint | undefined) {
+  const { actor, isFetching } = useActor(createActor);
+  return useQuery<OtpStatusResult>({
+    queryKey: QK.otpStatus(sessionId ?? 0n),
+    queryFn: async (): Promise<OtpStatusResult> => {
+      if (!actor || !sessionId)
+        return { valid: false, expired: true, attemptsLeft: 0n };
+      return actor.getOtpStatus(sessionId);
+    },
+    enabled: !!actor && !isFetching && !!sessionId,
+    refetchInterval: 5000,
   });
 }
 
@@ -563,8 +689,13 @@ export function useMarkNotificationRead() {
       if (!actor) throw new Error("Actor not ready");
       return actor.markNotificationRead(params.notifId);
     },
-    onSuccess: (_, vars) =>
-      qc.invalidateQueries({ queryKey: QK.notifications(vars.userId) }),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: QK.notifications(vars.userId) });
+      qc.invalidateQueries({
+        queryKey: QK.notificationsWithCount(vars.userId),
+      });
+      qc.invalidateQueries({ queryKey: QK.unreadCount(vars.userId) });
+    },
   });
 }
 

@@ -39,9 +39,10 @@ export interface User {
     isActive: boolean;
     email: string;
     passwordHash: string;
-    phone?: string;
+    phone: string;
     lastLogin?: Timestamp;
     lastName: string;
+    phoneVerified: boolean;
     firstName: string;
 }
 export interface Education {
@@ -230,7 +231,17 @@ export interface backendInterface {
     getMyEnrollments(studentId: string): Promise<Array<Enrollment>>;
     getMyPlacementRecord(studentId: string): Promise<Array<PlacementRecord>>;
     getNotifications(userId: string): Promise<Array<Notification>>;
+    getNotificationsWithCount(userId: string): Promise<{
+        notifications: Array<Notification>;
+        unreadCount: bigint;
+    }>;
+    getOtpStatus(sessionId: bigint): Promise<{
+        attemptsLeft: bigint;
+        expired: boolean;
+        valid: boolean;
+    }>;
     getProfile(userId: string): Promise<StudentProfile | null>;
+    getUnreadCount(userId: string): Promise<bigint>;
     getUserById(id: string): Promise<Result>;
     listCenters(): Promise<Array<Center>>;
     listCourses(): Promise<Array<Course>>;
@@ -241,6 +252,11 @@ export interface backendInterface {
     register(email: string, passwordHash: string, firstName: string, lastName: string, role: UserRole): Promise<Result>;
     seedSampleData(): Promise<string>;
     sendNotification(userId: string, notifType: string, message: string, link: string | null): Promise<Notification>;
+    sendOtp(phone: string): Promise<{
+        ok: boolean;
+        error?: string;
+        sessionId: bigint;
+    }>;
     updateApplicationStatus(applicationId: string, status: string): Promise<Result_5>;
     updateCenter(id: string, name: string, location: string, capacity: bigint, managerName: string, managerContact: string): Promise<Result_4>;
     updateCourse(id: string, title: string, description: string, category: string, durationWeeks: bigint, startDate: Timestamp, endDate: Timestamp, capacity: bigint): Promise<Result_3>;
@@ -248,4 +264,9 @@ export interface backendInterface {
     updateJob(id: string, title: string, description: string, requirements: string, education: string, location: string, jobType: string, category: string): Promise<Result_1>;
     updateUser(id: string, firstName: string, lastName: string, phone: string | null): Promise<Result>;
     upsertJobSeekerProfile(userId: string, profile: JobSeekerProfile): Promise<JobSeekerProfile>;
+    verifyOtp(sessionId: bigint, code: string): Promise<{
+        ok: boolean;
+        userId?: bigint;
+        error?: string;
+    }>;
 }

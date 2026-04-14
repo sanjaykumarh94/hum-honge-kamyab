@@ -21,9 +21,11 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UserRole } from "../backend.d";
+import type { Notification } from "../backend.d";
 import { useLanguage } from "../context/LanguageContext";
+import { useNotificationContext } from "../context/NotificationContext";
 import { useAuthStore } from "../store/auth";
 import { ROLE_LABELS } from "../types";
 import { LanguageToggle } from "./LanguageToggle";
@@ -104,6 +106,191 @@ function getNavItems(role: UserRole | null): NavItem[] {
   if (role === UserRole.JobSeeker) return jobSeekerNav;
   if (role === UserRole.Employer) return employerNav;
   return [];
+}
+
+// ─── Notification Badge ──────────────────────────────────────────
+function NotificationBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1 leading-none animate-pulse"
+      aria-label={`${count} unread notifications`}
+      data-ocid="notification-badge"
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+// ─── Relative time helper ────────────────────────────────────────
+function formatRelTime(ts: bigint): string {
+  const ms = Number(ts) / 1_000_000;
+  const diff = Date.now() - ms;
+  if (diff < 60_000) return "Just now";
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+  return `${Math.floor(diff / 86_400_000)}d ago`;
+}
+
+// ─── Notification Bell Dropdown ──────────────────────────────────
+interface NotificationBellProps {
+  notifications: Notification[];
+  unreadCount: number;
+  markRead: (id: string) => Promise<void>;
+}
+
+function NotificationBell({
+  notifications,
+  unreadCount,
+  markRead,
+}: NotificationBellProps) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    if (open) document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
+  const recent = notifications.slice(0, 5);
+
+  async function handleNotifClick(notif: Notification) {
+    setOpen(false);
+    if (!notif.isRead) {
+      await markRead(notif.id);
+    }
+    if (notif.link) {
+      router.navigate({ to: notif.link as "/" });
+    }
+  }
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="relative p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+        aria-expanded={open}
+        aria-haspopup="true"
+        data-ocid="notification-bell-btn"
+      >
+        <Bell size={18} />
+        <NotificationBadge count={unreadCount} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden"
+          role="menu"
+          aria-label="Notifications"
+          data-ocid="notification-dropdown"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm text-foreground">
+                Notifications
+              </span>
+              {unreadCount > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] px-1.5 py-0 h-4 bg-destructive text-destructive-foreground"
+                >
+                  {unreadCount}
+                </Badge>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Close notifications"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          {/* List */}
+          <div className="max-h-72 overflow-y-auto">
+            {recent.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+                <Bell
+                  size={24}
+                  className="text-muted-foreground opacity-40 mb-2"
+                />
+                <p className="text-sm text-muted-foreground">
+                  No notifications yet
+                </p>
+              </div>
+            ) : (
+              recent.map((notif) => (
+                <button
+                  type="button"
+                  key={notif.id}
+                  onClick={() => handleNotifClick(notif)}
+                  className={`w-full text-left flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                    notif.isRead
+                      ? "hover:bg-muted/40"
+                      : "bg-primary/5 hover:bg-primary/10"
+                  }`}
+                  data-ocid={`dropdown-notif-${notif.id}`}
+                  role="menuitem"
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.isRead ? "bg-transparent" : "bg-primary"}`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className={`text-xs leading-relaxed line-clamp-2 break-words ${notif.isRead ? "text-muted-foreground" : "text-foreground font-medium"}`}
+                    >
+                      {notif.message}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {formatRelTime(notif.createdAt)}
+                    </p>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-border px-4 py-2.5">
+            <Link
+              to="/student/notifications"
+              onClick={() => setOpen(false)}
+              className="text-xs font-semibold text-primary hover:underline w-full text-center block"
+              data-ocid="notification-view-all"
+            >
+              View all notifications →
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Public Layout ──────────────────────────────────────────────
@@ -221,6 +408,7 @@ function AuthSidebar({ navItems }: { navItems: NavItem[] }) {
   const { t } = useLanguage();
   const router = useRouter();
   const currentPath = router.state.location.pathname;
+  const { unreadCount } = useNotificationContext();
 
   const handleLogout = () => {
     logout();
@@ -287,6 +475,7 @@ function AuthSidebar({ navItems }: { navItems: NavItem[] }) {
               item.path !== "/student" &&
               item.path !== "/employer" &&
               currentPath.startsWith(item.path));
+          const isNotifications = item.label === "Notifications";
           return (
             <Link
               key={item.path}
@@ -299,9 +488,10 @@ function AuthSidebar({ navItems }: { navItems: NavItem[] }) {
               data-ocid={`sidebar-nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
             >
               <span
-                className={isActive ? "text-primary" : "text-muted-foreground"}
+                className={`relative flex-shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"}`}
               >
                 {item.icon}
+                {isNotifications && <NotificationBadge count={unreadCount} />}
               </span>
               <span className="flex-1">{t(item.label)}</span>
               {isActive && <ChevronRight size={12} className="text-primary" />}
@@ -326,12 +516,13 @@ function AuthSidebar({ navItems }: { navItems: NavItem[] }) {
   );
 }
 
-// ─── Authenticated Header (mobile) ───────────────────────────────
+// ─── Authenticated Header (mobile + desktop top bar) ─────────────
 function AuthHeader({ navItems }: { navItems: NavItem[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, role, logout } = useAuthStore();
   const { t } = useLanguage();
   const router = useRouter();
+  const { notifications, unreadCount, markRead } = useNotificationContext();
 
   const handleLogout = () => {
     logout();
@@ -357,13 +548,19 @@ function AuthHeader({ navItems }: { navItems: NavItem[] }) {
           </div>
           <span className="font-display font-bold text-sm">हम होंगे कामयाब</span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {role && (
             <Badge variant="outline" className="text-xs hidden sm:flex">
               {ROLE_LABELS[role]}
             </Badge>
           )}
           <LanguageToggle />
+          {/* Notification bell — visible in mobile header */}
+          <NotificationBell
+            notifications={notifications}
+            unreadCount={unreadCount}
+            markRead={markRead}
+          />
           <Avatar className="w-7 h-7">
             <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
               {initials}
@@ -382,17 +579,29 @@ function AuthHeader({ navItems }: { navItems: NavItem[] }) {
 
       {menuOpen && (
         <div className="border-t border-border bg-card pb-3 px-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-sm transition-smooth"
-            >
-              {item.icon}
-              {t(item.label)}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isNotifications = item.label === "Notifications";
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-sm transition-smooth"
+                data-ocid={`mobile-nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
+              >
+                <span className="relative flex-shrink-0">
+                  {item.icon}
+                  {isNotifications && <NotificationBadge count={unreadCount} />}
+                </span>
+                <span className="flex-1">{t(item.label)}</span>
+                {isNotifications && unreadCount > 0 && (
+                  <span className="text-xs font-semibold text-destructive">
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
           <Separator className="my-2" />
           <button
             type="button"
@@ -473,6 +682,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
 // ─── Authenticated Layout ────────────────────────────────────────
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   const { role } = useAuthStore();
+  const { notifications, unreadCount, markRead } = useNotificationContext();
   const navItems = getNavItems(role);
 
   return (
@@ -483,12 +693,22 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         <div className="hidden lg:flex h-[calc(100vh-0px)] sticky top-0">
           <AuthSidebar navItems={navItems} />
         </div>
-        <main
-          className="flex-1 overflow-y-auto p-6 bg-background"
-          data-ocid="auth-main-content"
-        >
-          {children}
-        </main>
+        {/* Desktop top bar with notification bell */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="hidden lg:flex items-center justify-end gap-2 px-6 py-2 bg-card border-b border-border">
+            <NotificationBell
+              notifications={notifications}
+              unreadCount={unreadCount}
+              markRead={markRead}
+            />
+          </div>
+          <main
+            className="flex-1 overflow-y-auto p-6 bg-background"
+            data-ocid="auth-main-content"
+          >
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );

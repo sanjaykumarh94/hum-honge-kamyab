@@ -105,6 +105,20 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  .transition-pulse {
+    animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-subtle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.75;
+    }
+  }
+
   .btn-primary {
     @apply px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-sm hover:opacity-90 transition-smooth;
   }
@@ -127,6 +141,34 @@
 
   .text-subtitle {
     @apply text-lg md:text-xl text-muted-foreground font-body;
+  }
+
+  .otp-input {
+    @apply w-12 h-12 text-center text-xl font-mono border-2 border-border rounded-sm bg-input text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-smooth;
+  }
+
+  .notification-unread {
+    @apply font-semibold text-foreground transition-pulse;
+  }
+
+  .notification-read {
+    @apply text-muted-foreground;
+  }
+
+  .notification-badge {
+    @apply inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-destructive rounded-full;
+  }
+
+  .notification-icon {
+    @apply w-5 h-5 text-accent flex-shrink-0;
+  }
+
+  .countdown-disabled {
+    @apply text-muted-foreground cursor-not-allowed;
+  }
+
+  .countdown-active {
+    @apply text-accent font-semibold cursor-pointer hover:text-accent transition-smooth;
   }
 }
 

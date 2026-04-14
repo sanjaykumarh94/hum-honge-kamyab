@@ -1,11 +1,14 @@
 import Types "../types/common";
 import JobsLib "../lib/jobs";
+import NotifLib "../lib/notifications";
 
 mixin (
   jobs : JobsLib.JobMap,
   applications : JobsLib.ApplicationMap,
   jobCounter : JobsLib.Counter,
   appCounter : JobsLib.Counter,
+  notifications : NotifLib.NotificationMap,
+  notifCounter : NotifLib.Counter,
 ) {
   public func addJob(
     employerId : Text,
@@ -52,12 +55,32 @@ mixin (
     JobsLib.deleteJob(jobs, id);
   };
 
+  /// Apply for a job and auto-send an application_status notification to the applicant.
   public func applyForJob(
     jobId : Text,
     applicantId : Text,
     resumeUrl : ?Text,
   ) : async Types.Result<Types.Application, Text> {
-    JobsLib.applyForJob(jobs, applications, appCounter, jobId, applicantId, resumeUrl);
+    let result = JobsLib.applyForJob(jobs, applications, appCounter, jobId, applicantId, resumeUrl);
+    switch (result) {
+      case (#ok(application)) {
+        // Find job title for the notification message
+        let jobTitle = switch (JobsLib.getJobById(jobs, jobId)) {
+          case (?job) { job.title };
+          case null { "Unknown Position" };
+        };
+        let _ = NotifLib.createNotification(
+          notifications,
+          notifCounter,
+          applicantId,
+          "application_status",
+          "Your application for \"" # jobTitle # "\" has been submitted successfully.",
+          ?("app:" # application.id),
+        );
+        #ok(application);
+      };
+      case (#err(e)) { #err(e) };
+    };
   };
 
   public func getApplicationsForJob(jobId : Text) : async [Types.Application] {
@@ -72,6 +95,26 @@ mixin (
     applicationId : Text,
     status : Text,
   ) : async Types.Result<Types.Application, Text> {
-    JobsLib.updateApplicationStatus(applications, applicationId, status);
+    let result = JobsLib.updateApplicationStatus(applications, applicationId, status);
+    switch (result) {
+      case (#ok(application)) {
+        // Notify applicant of status change
+        let jobTitle = switch (JobsLib.getJobById(jobs, application.jobId)) {
+          case (?job) { job.title };
+          case null { "Unknown Position" };
+        };
+        let statusMsg = "Your application for \"" # jobTitle # "\" has been updated to: " # status # ".";
+        let _ = NotifLib.createNotification(
+          notifications,
+          notifCounter,
+          application.applicantId,
+          "application_status",
+          statusMsg,
+          ?("app:" # applicationId),
+        );
+        #ok(application);
+      };
+      case (#err(e)) { #err(e) };
+    };
   };
 };

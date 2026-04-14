@@ -17,7 +17,8 @@ type User =
    lastLogin: opt Timestamp;
    lastName: text;
    passwordHash: text;
-   phone: opt text;
+   phone: text;
+   phoneVerified: bool;
    role: UserRole;
  };
 type Timestamp = int;
@@ -233,7 +234,19 @@ service : {
   getMyEnrollments: (studentId: text) -> (vec Enrollment);
   getMyPlacementRecord: (studentId: text) -> (vec PlacementRecord);
   getNotifications: (userId: text) -> (vec Notification);
+  getNotificationsWithCount: (userId: text) ->
+   (record {
+      notifications: vec Notification;
+      unreadCount: nat;
+    });
+  getOtpStatus: (sessionId: nat) ->
+   (record {
+      attemptsLeft: nat;
+      expired: bool;
+      valid: bool;
+    });
   getProfile: (userId: text) -> (opt StudentProfile);
+  getUnreadCount: (userId: text) -> (nat) query;
   getUserById: (id: text) -> (Result);
   listCenters: () -> (vec Center);
   listCourses: () -> (vec Course);
@@ -246,6 +259,12 @@ service : {
   seedSampleData: () -> (text);
   sendNotification: (userId: text, notifType: text, message: text, link:
    opt text) -> (Notification);
+  sendOtp: (phone: text) ->
+   (record {
+      error: opt text;
+      ok: bool;
+      sessionId: nat;
+    });
   updateApplicationStatus: (applicationId: text, status: text) -> (Result_5);
   updateCenter: (id: text, name: text, location: text, capacity: nat,
    managerName: text, managerContact: text) -> (Result_4);
@@ -260,4 +279,10 @@ service : {
    (Result);
   upsertJobSeekerProfile: (userId: text, profile: JobSeekerProfile) ->
    (JobSeekerProfile);
+  verifyOtp: (sessionId: nat, code: text) ->
+   (record {
+      error: opt text;
+      ok: bool;
+      userId: opt nat;
+    });
 }

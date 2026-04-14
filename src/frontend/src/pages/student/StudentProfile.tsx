@@ -132,7 +132,7 @@ export default function StudentProfilePage() {
           ...user,
           firstName,
           lastName,
-          phone: phone || undefined,
+          phone: phone || "",
         });
       toast.success("Profile updated successfully!");
       setEditing(false);

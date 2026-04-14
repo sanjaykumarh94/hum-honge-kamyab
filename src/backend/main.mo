@@ -6,6 +6,7 @@ import JobsLib "lib/jobs";
 import PlacementsLib "lib/placements";
 import ProfilesLib "lib/profiles";
 import NotifLib "lib/notifications";
+import OtpLib "lib/otp";
 import AuthMixin "mixins/auth-api";
 import CentersMixin "mixins/centers-api";
 import CoursesMixin "mixins/courses-api";
@@ -13,8 +14,11 @@ import JobsMixin "mixins/jobs-api";
 import PlacementsMixin "mixins/placements-api";
 import ProfilesMixin "mixins/profiles-api";
 import NotifMixin "mixins/notifications-api";
+import OtpMixin "mixins/otp-api";
 import SeedMixin "mixins/seed-api";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   // Data maps
   let users : AuthLib.UserMap = Map.empty();
@@ -30,6 +34,7 @@ actor {
   let experiences : ProfilesLib.ExperienceMap = Map.empty();
   let educations : ProfilesLib.EducationMap = Map.empty();
   let notifications : NotifLib.NotificationMap = Map.empty();
+  let otpSessions : OtpLib.OtpSessionMap = Map.empty();
 
   // ID counters — mutable, live in the actor
   let userCounter : AuthLib.Counter = { var val = 0 };
@@ -43,13 +48,15 @@ actor {
   let expCounter : ProfilesLib.Counter = { var val = 0 };
   let eduCounter : ProfilesLib.Counter = { var val = 0 };
   let notifCounter : NotifLib.Counter = { var val = 0 };
+  let otpCounter : OtpLib.Counter = { var val = 0 };
 
   include AuthMixin(users, userCounter);
   include CentersMixin(centers, centerCounter);
-  include CoursesMixin(courses, enrollments, courseCounter, enrollCounter);
-  include JobsMixin(jobs, applications, jobCounter, appCounter);
-  include PlacementsMixin(drives, placementRecords, driveCounter, recordCounter);
+  include CoursesMixin(courses, enrollments, courseCounter, enrollCounter, notifications, notifCounter);
+  include JobsMixin(jobs, applications, jobCounter, appCounter, notifications, notifCounter);
+  include PlacementsMixin(drives, placementRecords, driveCounter, recordCounter, users, notifications, notifCounter);
   include ProfilesMixin(studentProfiles, jobSeekerProfiles, experiences, educations, expCounter, eduCounter);
   include NotifMixin(notifications, notifCounter);
+  include OtpMixin(otpSessions, otpCounter, users);
   include SeedMixin(users, userCounter, centers, centerCounter, courses, enrollments, courseCounter, enrollCounter, jobs, applications, jobCounter, appCounter, drives, placementRecords, driveCounter, recordCounter, notifications, notifCounter);
 };

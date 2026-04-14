@@ -36,7 +36,8 @@ module {
       passwordHash;
       firstName;
       lastName;
-      phone = null;
+      phone = "";
+      phoneVerified = false;
       role;
       createdAt = Time.now();
       lastLogin = null;
@@ -86,7 +87,7 @@ module {
           user with
           firstName;
           lastName;
-          phone;
+          phone = switch (phone) { case (?p) p; case null user.phone };
         };
         users.add(id, updated);
         #ok(updated);

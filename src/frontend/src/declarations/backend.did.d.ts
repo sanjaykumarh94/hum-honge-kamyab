@@ -156,9 +156,10 @@ export interface User {
   'isActive' : boolean,
   'email' : string,
   'passwordHash' : string,
-  'phone' : [] | [string],
+  'phone' : string,
   'lastLogin' : [] | [Timestamp],
   'lastName' : string,
+  'phoneVerified' : boolean,
   'firstName' : string,
 }
 export type UserId = string;
@@ -243,7 +244,16 @@ export interface _SERVICE {
   'getMyEnrollments' : ActorMethod<[string], Array<Enrollment>>,
   'getMyPlacementRecord' : ActorMethod<[string], Array<PlacementRecord>>,
   'getNotifications' : ActorMethod<[string], Array<Notification>>,
+  'getNotificationsWithCount' : ActorMethod<
+    [string],
+    { 'notifications' : Array<Notification>, 'unreadCount' : bigint }
+  >,
+  'getOtpStatus' : ActorMethod<
+    [bigint],
+    { 'attemptsLeft' : bigint, 'expired' : boolean, 'valid' : boolean }
+  >,
   'getProfile' : ActorMethod<[string], [] | [StudentProfile]>,
+  'getUnreadCount' : ActorMethod<[string], bigint>,
   'getUserById' : ActorMethod<[string], Result>,
   'listCenters' : ActorMethod<[], Array<Center>>,
   'listCourses' : ActorMethod<[], Array<Course>>,
@@ -256,6 +266,10 @@ export interface _SERVICE {
   'sendNotification' : ActorMethod<
     [string, string, string, [] | [string]],
     Notification
+  >,
+  'sendOtp' : ActorMethod<
+    [string],
+    { 'ok' : boolean, 'error' : [] | [string], 'sessionId' : bigint }
   >,
   'updateApplicationStatus' : ActorMethod<[string, string], Result_5>,
   'updateCenter' : ActorMethod<
@@ -275,6 +289,10 @@ export interface _SERVICE {
   'upsertJobSeekerProfile' : ActorMethod<
     [string, JobSeekerProfile],
     JobSeekerProfile
+  >,
+  'verifyOtp' : ActorMethod<
+    [bigint, string],
+    { 'ok' : boolean, 'userId' : [] | [bigint], 'error' : [] | [string] }
   >,
 }
 export declare const idlService: IDL.ServiceClass;

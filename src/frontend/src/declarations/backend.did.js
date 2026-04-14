@@ -123,9 +123,10 @@ export const User = IDL.Record({
   'isActive' : IDL.Bool,
   'email' : IDL.Text,
   'passwordHash' : IDL.Text,
-  'phone' : IDL.Opt(IDL.Text),
+  'phone' : IDL.Text,
   'lastLogin' : IDL.Opt(Timestamp),
   'lastName' : IDL.Text,
+  'phoneVerified' : IDL.Bool,
   'firstName' : IDL.Text,
 });
 export const JobSeekerProfile = IDL.Record({
@@ -258,7 +259,29 @@ export const idlService = IDL.Service({
   'getMyEnrollments' : IDL.Func([IDL.Text], [IDL.Vec(Enrollment)], []),
   'getMyPlacementRecord' : IDL.Func([IDL.Text], [IDL.Vec(PlacementRecord)], []),
   'getNotifications' : IDL.Func([IDL.Text], [IDL.Vec(Notification)], []),
+  'getNotificationsWithCount' : IDL.Func(
+      [IDL.Text],
+      [
+        IDL.Record({
+          'notifications' : IDL.Vec(Notification),
+          'unreadCount' : IDL.Nat,
+        }),
+      ],
+      [],
+    ),
+  'getOtpStatus' : IDL.Func(
+      [IDL.Nat],
+      [
+        IDL.Record({
+          'attemptsLeft' : IDL.Nat,
+          'expired' : IDL.Bool,
+          'valid' : IDL.Bool,
+        }),
+      ],
+      [],
+    ),
   'getProfile' : IDL.Func([IDL.Text], [IDL.Opt(StudentProfile)], []),
+  'getUnreadCount' : IDL.Func([IDL.Text], [IDL.Nat], ['query']),
   'getUserById' : IDL.Func([IDL.Text], [Result], []),
   'listCenters' : IDL.Func([], [IDL.Vec(Center)], []),
   'listCourses' : IDL.Func([], [IDL.Vec(Course)], []),
@@ -275,6 +298,17 @@ export const idlService = IDL.Service({
   'sendNotification' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Opt(IDL.Text)],
       [Notification],
+      [],
+    ),
+  'sendOtp' : IDL.Func(
+      [IDL.Text],
+      [
+        IDL.Record({
+          'ok' : IDL.Bool,
+          'error' : IDL.Opt(IDL.Text),
+          'sessionId' : IDL.Nat,
+        }),
+      ],
       [],
     ),
   'updateApplicationStatus' : IDL.Func([IDL.Text, IDL.Text], [Result_5], []),
@@ -320,6 +354,17 @@ export const idlService = IDL.Service({
   'upsertJobSeekerProfile' : IDL.Func(
       [IDL.Text, JobSeekerProfile],
       [JobSeekerProfile],
+      [],
+    ),
+  'verifyOtp' : IDL.Func(
+      [IDL.Nat, IDL.Text],
+      [
+        IDL.Record({
+          'ok' : IDL.Bool,
+          'userId' : IDL.Opt(IDL.Nat),
+          'error' : IDL.Opt(IDL.Text),
+        }),
+      ],
       [],
     ),
 });
@@ -442,9 +487,10 @@ export const idlFactory = ({ IDL }) => {
     'isActive' : IDL.Bool,
     'email' : IDL.Text,
     'passwordHash' : IDL.Text,
-    'phone' : IDL.Opt(IDL.Text),
+    'phone' : IDL.Text,
     'lastLogin' : IDL.Opt(Timestamp),
     'lastName' : IDL.Text,
+    'phoneVerified' : IDL.Bool,
     'firstName' : IDL.Text,
   });
   const JobSeekerProfile = IDL.Record({
@@ -585,7 +631,29 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'getNotifications' : IDL.Func([IDL.Text], [IDL.Vec(Notification)], []),
+    'getNotificationsWithCount' : IDL.Func(
+        [IDL.Text],
+        [
+          IDL.Record({
+            'notifications' : IDL.Vec(Notification),
+            'unreadCount' : IDL.Nat,
+          }),
+        ],
+        [],
+      ),
+    'getOtpStatus' : IDL.Func(
+        [IDL.Nat],
+        [
+          IDL.Record({
+            'attemptsLeft' : IDL.Nat,
+            'expired' : IDL.Bool,
+            'valid' : IDL.Bool,
+          }),
+        ],
+        [],
+      ),
     'getProfile' : IDL.Func([IDL.Text], [IDL.Opt(StudentProfile)], []),
+    'getUnreadCount' : IDL.Func([IDL.Text], [IDL.Nat], ['query']),
     'getUserById' : IDL.Func([IDL.Text], [Result], []),
     'listCenters' : IDL.Func([], [IDL.Vec(Center)], []),
     'listCourses' : IDL.Func([], [IDL.Vec(Course)], []),
@@ -602,6 +670,17 @@ export const idlFactory = ({ IDL }) => {
     'sendNotification' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Opt(IDL.Text)],
         [Notification],
+        [],
+      ),
+    'sendOtp' : IDL.Func(
+        [IDL.Text],
+        [
+          IDL.Record({
+            'ok' : IDL.Bool,
+            'error' : IDL.Opt(IDL.Text),
+            'sessionId' : IDL.Nat,
+          }),
+        ],
         [],
       ),
     'updateApplicationStatus' : IDL.Func([IDL.Text, IDL.Text], [Result_5], []),
@@ -647,6 +726,17 @@ export const idlFactory = ({ IDL }) => {
     'upsertJobSeekerProfile' : IDL.Func(
         [IDL.Text, JobSeekerProfile],
         [JobSeekerProfile],
+        [],
+      ),
+    'verifyOtp' : IDL.Func(
+        [IDL.Nat, IDL.Text],
+        [
+          IDL.Record({
+            'ok' : IDL.Bool,
+            'userId' : IDL.Opt(IDL.Nat),
+            'error' : IDL.Opt(IDL.Text),
+          }),
+        ],
         [],
       ),
   });
